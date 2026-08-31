@@ -3,22 +3,22 @@ import streamlit as st
 
 # Configuração da página do Streamlit
 st.set_page_config(
-    page_title="Assistente IA com Banco de Dados Externo",
+    page_title="Assistente IA com Agendamento Dinâmico",
     page_icon="🤖",
     layout="centered",
 )
 
-st.title("🤖 Assistente Virtual com Agendamento")
+st.title("🤖 Styllus Barber - Assistente de Agendamento")
 st.write(
-    "Este protótipo consulta um arquivo externo (banco de dados em texto) para"
-    " verificar vagas."
+    "Este protótipo consulta e atualiza um banco de dados em arquivo texto"
+    " (`horarios.txt`)."
 )
 
 # Campo para o usuário inserir a chave da API
 api_key = st.text_input("Insira sua Chave da API do Google Gemini:", type="password")
 
 
-# 1. FUNÇÃO QUE LÊ O ARQUIVO EXTERNO (Simulando o Banco de Dados)
+# 1. FUNÇÃO QUE LÊ O ARQUIVO EXTERNO (Banco de Dados)
 def verificar_disponibilidade(data: str, horario: str) -> str:
   """Verifica no arquivo de banco de dados se um determinado dia e horário estão vagos.
 
@@ -27,7 +27,6 @@ def verificar_disponibilidade(data: str, horario: str) -> str:
       horario: O horário desejado (ex: '14:00')
   """
   try:
-    # Tenta abrir o arquivo horarios.txt
     with open("horarios.txt", "r", encoding="utf-8") as arquivo:
       linhas = arquivo.readlines()
 
@@ -36,15 +35,12 @@ def verificar_disponibilidade(data: str, horario: str) -> str:
       if "|" in linha:
         d, h = linha.strip().split("|")
         horarios_ocupados.append((d.lower().strip(), h.strip()))
-
   except FileNotFoundError:
-    # Se o arquivo não existir, considera que não há horários ocupados
     horarios_ocupados = []
 
   data_limpa = data.lower().strip()
   horario_limpo = horario.strip()
 
-  # Compara com a lista lida do arquivo
   if (data_limpa, horario_limpo) in horarios_ocupados:
     return (
         f"O horário {horario_limpo} em {data_limpa} JÁ ESTÁ OCUPADO. Por favor,"
@@ -61,13 +57,13 @@ if api_key:
   client = genai.Client(api_key=api_key)
 
   system_instruction = (
-      "Você é um assistente virtual prestativo da 'Barbearia Estillo'."
-      " Informações dos serviços e preços:"
+      "Você é um assistente virtual prestativo da barbearia 'Styllus Barber',"
+      " administrada por Francisco Silva, localizada no bairro Centro de"
+      " Imperatriz - MA. Informações dos serviços e preços:"
       " - Corte de Cabelo: R$ 35,00"
       " - Barba: R$ 25,00"
       " - Combo (Cabelo + Barba): R$ 50,00"
       " Horários de funcionamento: Segunda a Sábado das 09h às 19h."
-      " Localização: Centro de Imperatriz - MA."
       " QUANDO O CLIENTE QUISER MARCAR OU PERGUNTAR SOBRE UM HORÁRIO, você DEVE"
       " obrigatoriamente chamar a função 'verificar_disponibilidade' para checar"
       " se está vago antes de confirmar."
@@ -83,6 +79,23 @@ if api_key:
     )
     st.session_state.messages = []
 
+  # --- PAINEL LATERAL PARA ADICIONAR HORÁRIO MANUALMENTE NO TXT ---
+  with st.sidebar:
+    st.subheader("Painel Administrativo")
+    st.write("Bloquear horário manualmente no `horarios.txt`:")
+    novo_dia = st.text_input("Dia (ex: terça-feira):")
+    novo_horario = st.text_input("Horário (ex: 14:00):")
+
+    if st.button("Salvar Horário Ocupado"):
+      if novo_dia and novo_horario:
+        # Abre o arquivo em modo de adição ('a') e escreve a nova linha
+        with open("horarios.txt", "a", encoding="utf-8") as f:
+          f.write(f"\n{novo_dia.lower().strip()}|{novo_horario.strip()}")
+        st.success(f"Horário {novo_horario} ({novo_dia}) salvo com sucesso!")
+      else:
+        st.warning("Preencha o dia e o horário.")
+
+  # Exibe o histórico de mensagens na tela principal
   for message in st.session_state.messages:
     with st.chat_message(message["role"]):
       st.markdown(message["content"])
