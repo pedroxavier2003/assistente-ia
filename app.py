@@ -1,30 +1,31 @@
+Aqui está o código completo do seu **`app.py`** atualizado, contendo a interface em Streamlit, a integração com o chat do Google Gemini, o painel lateral para cadastrar horários e a função inteligente que lê e valida os dados direto do seu arquivo `horarios.txt`:
+
+```python
 from google import genai
 import streamlit as st
 
 # Configuração da página do Streamlit
 st.set_page_config(
-    page_title="Assistente IA com Agendamento Dinâmico",
-    page_icon="🤖",
-    layout="centered",
+    page_title="Styllus Barber - Assistente IA", page_icon="🤖", layout="centered"
 )
 
 st.title("🤖 Styllus Barber - Assistente de Agendamento")
 st.write(
-    "Este protótipo consulta e atualiza um banco de dados em arquivo texto"
-    " (`horarios.txt`)."
+    "Protótipo de atendimento automático com consulta e atualização de"
+    " disponibilidade em arquivo (`horarios.txt`)."
 )
 
 # Campo para o usuário inserir a chave da API
 api_key = st.text_input("Insira sua Chave da API do Google Gemini:", type="password")
 
 
-# 1. FUNÇÃO QUE LÊ O ARQUIVO EXTERNO (Banco de Dados)
+# 1. FUNÇÃO QUE LÊ E VALIDA O ARQUIVO EXTERNO (Banco de Dados)
 def verificar_disponibilidade(data: str, horario: str) -> str:
   """Verifica no arquivo de banco de dados se um determinado dia e horário estão vagos.
 
   Args:
       data: A data desejada (ex: 'terça-feira')
-      horario: O horário desejado (ex: '14:00')
+      horario: O horário desejado (ex: '14:00' ou '14')
   """
   try:
     with open("horarios.txt", "r", encoding="utf-8") as arquivo:
@@ -34,14 +35,27 @@ def verificar_disponibilidade(data: str, horario: str) -> str:
     for linha in linhas:
       if "|" in linha:
         d, h = linha.strip().split("|")
-        horarios_ocupados.append((d.lower().strip(), h.strip()))
+        d_limpo = d.lower().strip()
+        h_limpo = h.strip()
+        horarios_ocupados.append((d_limpo, h_limpo))
   except FileNotFoundError:
     horarios_ocupados = []
 
   data_limpa = data.lower().strip()
   horario_limpo = horario.strip()
 
-  if (data_limpa, horario_limpo) in horarios_ocupados:
+  # Verifica correspondência flexível para garantir que encontre o horário ocupado
+  ocupado = False
+  for d_cad, h_cad in horarios_ocupados:
+    if d_cad == data_limpa and (
+        h_cad == horario_limpo
+        or h_cad in horario_limpo
+        or horario_limpo in h_cad
+    ):
+      ocupado = True
+      break
+
+  if ocupado:
     return (
         f"O horário {horario_limpo} em {data_limpa} JÁ ESTÁ OCUPADO. Por favor,"
         " sugira outro horário."
@@ -88,7 +102,6 @@ if api_key:
 
     if st.button("Salvar Horário Ocupado"):
       if novo_dia and novo_horario:
-        # Abre o arquivo em modo de adição ('a') e escreve a nova linha
         with open("horarios.txt", "a", encoding="utf-8") as f:
           f.write(f"\n{novo_dia.lower().strip()}|{novo_horario.strip()}")
         st.success(f"Horário {novo_horario} ({novo_dia}) salvo com sucesso!")
@@ -120,3 +133,5 @@ if api_key:
           st.error(f"Erro ao conectar com a IA: {e}")
 else:
   st.info("Insira sua chave de API acima para começar a conversar com o assistente.")
+
+```

@@ -1,3 +1,6 @@
 terça-feira|10:00
 terça-feira|14:00
 quarta-feira|15:00
+quarta-feira|15
+quinta-feira|16
+terça-feira|14
