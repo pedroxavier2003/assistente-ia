@@ -35,7 +35,7 @@ if api_key:
         try:
           # Chamada do modelo de IA usando a API nova do Google GenAI
           response = client.models.generate_content(
-              model="gemini-2.5-flash",
+              model="gemini-3.6-flash",
               contents=f"{system_instruction}\n\nCliente: {pergunta_cliente}",
           )
           st.success("Resposta do Assistente:")
