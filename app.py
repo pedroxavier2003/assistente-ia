@@ -8,17 +8,18 @@ st.set_page_config(
 
 st.title("🤖 Assistente Virtual Inteligente")
 st.write(
-    "Este protótipo simula um atendente automático para pequenos negócios locais."
+    "Este protótipo simula um atendente automático interativo para pequenos"
+    " negócios locais."
 )
 
-# Campo para o usuário inserir a chave da API (ou você pode fixar ela para testes)
+# Campo para o usuário inserir a chave da API
 api_key = st.text_input("Insira sua Chave da API do Google Gemini:", type="password")
 
 if api_key:
   # Configura o cliente da IA
   client = genai.Client(api_key=api_key)
 
-  # Contexto/Instrução atualizado com preços e mais detalhes
+  # Contexto/Instrução da barbearia
   system_instruction = (
       "Você é um assistente virtual prestativo de uma barbearia local chamada"
       " 'Barbearia Estillo'. Responda dúvidas de clientes de forma educada,"
@@ -28,26 +29,45 @@ if api_key:
       " - Combo (Cabelo + Barba): R$ 50,00"
       " Horários de funcionamento: Segunda a Sábado das 09h às 19h."
       " Localização: Centro de Imperatriz - MA."
-      " Sempre incentive o cliente a confirmar o melhor dia e horário para agendamento."
+      " Sempre conduza o cliente para realizar o agendamento de forma amigável."
   )
 
-  # Entrada de texto do cliente simulado
-  pergunta_cliente = st.text_input("O que o cliente deseja perguntar?")
+  # Inicializa o histórico de mensagens na tela do Streamlit se não existir
+  if "chat_history" not in st.session_state:
+    # Criamos o objeto de chat da IA passando a instrução de sistema
+    st.session_state.chat = client.chats.create(
+        model="gemini-3.6-flash",
+        config={"system_instruction": system_instruction},
+    )
+    # Lista para guardar as mensagens visuais da tela
+    st.session_state.messages = []
 
-  if st.button("Enviar Pergunta"):
-    if pergunta_cliente:
-      with st.spinner("O assistente está pensando..."):
+  # Exibe as mensagens anteriores na tela para rolar o histórico
+  for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+      st.markdown(message["content"])
+
+  # Caixa de texto do chat na parte inferior
+  if pergunta_cliente := st.chat_input("Digite sua mensagem para o assistente..."):
+    # Adiciona a mensagem do usuário no histórico visual
+    st.session_state.messages.append(
+        {"role": "user", "content": pergunta_cliente}
+    )
+    with st.chat_message("user"):
+      st.markdown(pergunta_cliente)
+
+    # Envia a mensagem para a IA mantendo o contexto da conversa
+    with st.chat_message("assistant"):
+      with st.spinner("O assistente está digitando..."):
         try:
-          # Chamada do modelo de IA usando a API nova do Google GenAI
-          response = client.models.generate_content(
-              model="gemini-3.6-flash",
-              contents=f"{system_instruction}\n\nCliente: {pergunta_cliente}",
+          response = st.session_state.chat.send_message(pergunta_cliente)
+          resposta_ia = response.text
+          st.markdown(resposta_ia)
+          # Salva a resposta da IA no histórico visual
+          st.session_state.messages.append(
+              {"role": "assistant", "content": resposta_ia}
           )
-          st.success("Resposta do Assistente:")
-          st.write(response.text)
         except Exception as e:
-          st.error(f"Ocorreu um erro ao conectar com a IA: {e}")
-    else:
-      st.warning("Por favor, digite uma pergunta para o assistente.")
+          st.error(f"Erro ao conectar com a IA: {e}")
 else:
-  st.info("Insira sua chave de API acima para começar a testar o assistente.")
+  st.info("Insira sua chave de API acima para começar a conversar com o assistente.")
