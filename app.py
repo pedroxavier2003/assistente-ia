@@ -18,12 +18,17 @@ if api_key:
   # Configura o cliente da IA
   client = genai.Client(api_key=api_key)
 
-  # Contexto/Instrução para a IA agir como atendente de um comércio local (ex: uma barbearia ou lojinha)
+  # Contexto/Instrução atualizado com preços e mais detalhes
   system_instruction = (
       "Você é um assistente virtual prestativo de uma barbearia local chamada"
       " 'Barbearia Estillo'. Responda dúvidas de clientes de forma educada,"
-      " curta e direta sobre cortes, barba, horários de funcionamento (Segunda a"
-      " Sábado das 09h às 19h) e localização (Centro de Imperatriz - MA)."
+      " curta e direta. Informações dos serviços e preços:"
+      " - Corte de Cabelo: R$ 35,00"
+      " - Barba: R$ 25,00"
+      " - Combo (Cabelo + Barba): R$ 50,00"
+      " Horários de funcionamento: Segunda a Sábado das 09h às 19h."
+      " Localização: Centro de Imperatriz - MA."
+      " Sempre incentive o cliente a confirmar o melhor dia e horário para agendamento."
   )
 
   # Entrada de texto do cliente simulado
