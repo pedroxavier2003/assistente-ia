@@ -1,6 +1,3 @@
-Aqui está o código completo do seu **`app.py`** atualizado, contendo a interface em Streamlit, a integração com o chat do Google Gemini, o painel lateral para cadastrar horários e a função inteligente que lê e valida os dados direto do seu arquivo `horarios.txt`:
-
-```python
 from google import genai
 import streamlit as st
 
@@ -133,5 +130,3 @@ if api_key:
           st.error(f"Erro ao conectar com a IA: {e}")
 else:
   st.info("Insira sua chave de API acima para começar a conversar com o assistente.")
-
-```
